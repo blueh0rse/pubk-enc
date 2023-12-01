@@ -1,53 +1,63 @@
 #!/bin/bash
-
-ALICE="alice"
 BOB="bob"
 PUBLIC="public"
 OUTPUT="encrypted.pem"
 
-# 1. Compute an ephemeral DH keypair with `openssl genpkey` using the file `param.pem` 
-# and store it in the file `ephpkey.pem`.
+# compute ephemeral DH keypair
 openssl genpkey -paramfile "$PUBLIC/dhparams.pem" -out "$BOB/tmp_privB.pem"
 
-
-# 2. Generate the corresponding ephemeral public key file.pem with `openssl pkey`
-# and store it into the `ephpubkey.pem` file
+# generate corresponding ephemeral public key
 openssl pkey -in "$BOB/tmp_privB.pem" -pubout -out "$BOB/tmp_pubB.pem"
 
-
-# 3. Derive a common secret from the secret ephemeral key **r** contained in `ephpkey.pem`
-# and the longterm public key of the recipient, contained in `alice_pubkey.pem` 
-# with `openssl pkeyutl -derive` 
+# derive common secret from ephemeral secret
 openssl pkeyutl -derive -inkey "$BOB/tmp_privB.pem" -peerkey "$PUBLIC/pubA.pem" -out "$BOB/common_secret.bin"
 
-
-# 4. Apply SHA256 to the common secret with `openssl dgst` and split it into half to obtain k1 and k2. 
-# Starting from the 32bytes long binary file with the hash value,
-# you can use `head -c 16` and `tail -c 16` to extract the first and the last 16bytes.
+# apply SHA256 to the common secret 
 openssl dgst -sha256 -binary "$BOB/common_secret.bin" > "$BOB/hashed_secret.bin"
+
+# split it into half to obtain k1 and k2. 
 head -c 16 "$BOB/hashed_secret.bin" > "$BOB/k1.bin"
 tail -c 16 "$BOB/hashed_secret.bin" > "$BOB/k2.bin"
 
-# 5. Encrypt the desired file with AES-128CBC using k1 with `openssl enc -aes-128-cbc` 
-# and store the result in the file `ciphertext.bin`. Use `xxd -p` to convert binary files
-# into hexadecimal representation. You would need to provide an IV for the encryption operation. 
-# You can generate a random one with `openssl rand 16` and store it in `iv.bin`
+# define message to send
 echo "Hi Alice, how are you?" > "$BOB/msg_for_alice.txt"
+
+# generate IV
 openssl rand 16 > "$BOB/iv.bin"
+
+# convert binary to hexadecimal
 xxd -p -c 32 "$BOB/k1.bin" > "$BOB/k1.hex"
 xxd -p -c 32 "$BOB/iv.bin" > "$BOB/iv.hex"
+
 KEY=$(cat "$BOB/k1.hex")
 IV=$(cat "$BOB/iv.hex")
-openssl enc -aes-128-cbc -in "$BOB/msg_for_alice.txt" -out "$BOB/ciphertext.bin" -K $KEY -iv $IV
 
-# 6. Use k2 to compute the `SHA256-HMAC` tag of the concatenation of `iv.bin` and
-# `ciphertext.bin` with `openssl dgst -hmac -sha256` to obtain the binary file `tag.bin`
+# encrypt the file with AES-128CBC using k1
+openssl enc -aes-128-cbc -in "$BOB/msg_for_alice.txt" -out "$BOB/ciphertext.bin" -K "$KEY" -iv "$IV"
+
+# convert binary to hexadecimal
 xxd -p -c 32 "$BOB/k2.bin" > "$BOB/k2.hex"
+
 HMAC_KEY=$(cat "$BOB/k2.hex")
+
+# combine iv and ciphertext
 cat "$BOB/iv.bin" "$BOB/ciphertext.bin" > "$BOB/combined.bin"
+
+# compute SHA256-HMAC tag
 openssl dgst -sha256 -hmac "$HMAC_KEY" -binary "$BOB/combined.bin" > "$BOB/tag.bin"
 
+# create final ciphertext
+# add temp keypair
+cat "$BOB/tmp_pubB.pem" > "$BOB/$OUTPUT"
 
-# 7. The final ciphertext consits of the four files:
-# `ephpubkey.pem`, `iv.bin`, `ciphertext.bin` and `tag.bin`.
-# Ideally, a single file in PEM or DER format joining the four would be a better option
+echo "-----BEGIN AES-128-CBC IV-----" >> "$BOB/$OUTPUT"
+openssl enc -a -in "$BOB/iv.bin" >> "$BOB/$OUTPUT"
+echo "-----END AES-128-CBC IV-----" >> "$BOB/$OUTPUT"
+
+echo "-----BEGIN AES-128-CBC CIPHERTEXT-----" >> "$BOB/$OUTPUT"
+openssl enc -a -in "$BOB/ciphertext.bin" >> "$BOB/$OUTPUT"
+echo "-----END AES-128-CBC CIPHERTEXT-----" >> "$BOB/$OUTPUT"
+
+echo "-----BEGIN SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
+openssl enc -a -in "$BOB/tag.bin" >> "$BOB/$OUTPUT"
+echo "-----BEGIN SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
