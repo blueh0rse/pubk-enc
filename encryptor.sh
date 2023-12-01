@@ -1,16 +1,23 @@
 #!/bin/bash
 
+ALICE="alice"
+BOB="bob"
+PUBLIC="public"
+
 # 1. Compute an ephemeral DH keypair with `openssl genpkey` using the file `param.pem` 
 # and store it in the file `ephpkey.pem`.
+openssl genpkey -paramfile "$PUBLIC/dhparams.pem" -out "$BOB/tmp_privB.pem"
 
 
 # 2. Generate the corresponding ephemeral public key file.pem with `openssl pkey`
 # and store it into the `ephpubkey.pem` file
+openssl pkey -in "$BOB/tmp_privB.pem" -pubout -out "$BOB/tmp_pubB.pem"
 
 
 # 3. Derive a common secret from the secret ephemeral key **r** contained in `ephpkey.pem`
 # and the longterm public key of the recipient, contained in `alice_pubkey.pem` 
 # with `openssl pkeyutl -derive` 
+openssl pkeyutl -derive -inkey "$BOB/tmp_privB.pem" -peerkey "$PUBLIC/pubA.pem" -out "$BOB/common_secret.bin"
 
 
 # 4. Apply SHA256 to the common secret with `openssl dgst` and split it into half to obtain k1 and k2. 
