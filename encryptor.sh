@@ -60,4 +60,4 @@ echo "-----END AES-128-CBC CIPHERTEXT-----" >> "$BOB/$OUTPUT"
 
 echo "-----BEGIN SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
 openssl enc -a -in "$BOB/tag.bin" >> "$BOB/$OUTPUT"
-echo "-----BEGIN SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
+echo "-----END SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
