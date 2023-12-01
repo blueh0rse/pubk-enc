@@ -47,17 +47,20 @@ cat "$BOB/iv.bin" "$BOB/ciphertext.bin" > "$BOB/combined.bin"
 openssl dgst -sha256 -hmac "$HMAC_KEY" -binary "$BOB/combined.bin" > "$BOB/tag.bin"
 
 # create final ciphertext
-# add temp keypair
+# add temp public key
 cat "$BOB/tmp_pubB.pem" > "$BOB/$OUTPUT"
 
+# add iv
 echo "-----BEGIN AES-128-CBC IV-----" >> "$BOB/$OUTPUT"
 openssl enc -a -in "$BOB/iv.bin" >> "$BOB/$OUTPUT"
 echo "-----END AES-128-CBC IV-----" >> "$BOB/$OUTPUT"
 
+# add ciphertext
 echo "-----BEGIN AES-128-CBC CIPHERTEXT-----" >> "$BOB/$OUTPUT"
 openssl enc -a -in "$BOB/ciphertext.bin" >> "$BOB/$OUTPUT"
 echo "-----END AES-128-CBC CIPHERTEXT-----" >> "$BOB/$OUTPUT"
 
+# add tag
 echo "-----BEGIN SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
 openssl enc -a -in "$BOB/tag.bin" >> "$BOB/$OUTPUT"
 echo "-----END SHA256-HMAC TAG-----" >> "$BOB/$OUTPUT"
