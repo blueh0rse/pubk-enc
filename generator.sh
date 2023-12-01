@@ -3,29 +3,37 @@ ALICE="alice"
 BOB="bob"
 PUBLIC="public"
 
-# 0. Prepare environment
+# check if alice/ exist
 if [ ! -d "$ALICE" ]; then
-    # if not create it
     if ! mkdir "$ALICE"; then
         echo "Error while creating $ALICE"
         exit 1
     fi
+else
+    # clean
+    rm "./$ALICE"/*
 fi
 
+# check if bob/ exist
 if [ ! -d "$BOB" ]; then
-    # if not create it
     if ! mkdir "$BOB"; then
         echo "Error while creating $BOB"
         exit 1
     fi
+else
+    # clean
+    rm "./$BOB"/*
 fi
 
+# check if public/ exist
 if [ ! -d "$PUBLIC" ]; then
-    # if not create it
     if ! mkdir "$PUBLIC"; then
         echo "Error while creating $PUBLIC"
         exit 1
     fi
+else
+    # clean
+    rm "./$PUBLIC"/*
 fi
 
 # 1. Generate the DH group
