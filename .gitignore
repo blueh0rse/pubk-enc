@@ -1,3 +1,6 @@
 alice/
 bob/
 public/
+test_files/
+tmp/
+msg*

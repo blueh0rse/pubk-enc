@@ -5,11 +5,20 @@ echo "---ENCRYPTOR---"
 echo "---------------"
 echo ""
 
+# check if 2 argument are given
+if [ "$#" -ne 2 ]; then
+    echo "Error! Bad use."
+    echo "- Usage:"
+    echo "./encryptor.sh \"<message>\" <output_file.pem>"
+    echo "- Example:"
+    echo "./encryptor.sh \"How are you?\" encrypted.pem"
+    exit 1
+fi
+
 BOB="bob"
 PUBLIC="public"
-OUTPUT="encrypted.pem"
-
-
+MSG="$1"
+OUTPUT_FILE="$2"
 
 echo "[0] Starting environment preparation..."
 # check if bob/ exist
@@ -56,7 +65,7 @@ echo "[5] Done!"
 
 # write message to send
 echo "[6] Writting message to send in $BOB/msg_for_alice.txt..."
-echo "$1" >"$BOB/msg_for_alice.txt"
+echo "$MSG" >"$BOB/msg_for_alice.txt"
 echo "[6] Done!"
 
 # generate IV
@@ -95,29 +104,29 @@ openssl dgst -sha256 -hmac "$HMAC_KEY" -binary "$BOB/combined.bin" >"$BOB/tag.bi
 echo "[11] Done!"
 
 # create final ciphertext
-echo "[12] Creating final file in $BOB/$OUTPUT..."
+echo "[12] Creating final file in $BOB/$OUTPUT_FILE..."
 # add temp public key
 echo "[12] Adding $BOB/tmp_pubB.pem..."
-cat "$BOB/tmp_pubB.pem" >"$BOB/$OUTPUT"
+cat "$BOB/tmp_pubB.pem" >"$BOB/$OUTPUT_FILE"
 
 # add iv
 echo "[12] Adding $BOB/iv.bin..."
-echo "-----BEGIN AES-128-CBC IV-----" >>"$BOB/$OUTPUT"
-openssl enc -a -in "$BOB/iv.bin" >>"$BOB/$OUTPUT"
-echo "-----END AES-128-CBC IV-----" >>"$BOB/$OUTPUT"
+echo "-----BEGIN AES-128-CBC IV-----" >>"$BOB/$OUTPUT_FILE"
+openssl enc -a -in "$BOB/iv.bin" >>"$BOB/$OUTPUT_FILE"
+echo "-----END AES-128-CBC IV-----" >>"$BOB/$OUTPUT_FILE"
 # add ciphertext
 echo "[12] Adding $BOB/ciphertext.bin..."
-echo "-----BEGIN AES-128-CBC CIPHERTEXT-----" >>"$BOB/$OUTPUT"
-openssl enc -a -in "$BOB/ciphertext.bin" >>"$BOB/$OUTPUT"
-echo "-----END AES-128-CBC CIPHERTEXT-----" >>"$BOB/$OUTPUT"
+echo "-----BEGIN AES-128-CBC CIPHERTEXT-----" >>"$BOB/$OUTPUT_FILE"
+openssl enc -a -in "$BOB/ciphertext.bin" >>"$BOB/$OUTPUT_FILE"
+echo "-----END AES-128-CBC CIPHERTEXT-----" >>"$BOB/$OUTPUT_FILE"
 # add tag
 echo "[12] Adding $BOB/tag.bin..."
-echo "-----BEGIN SHA256-HMAC TAG-----" >>"$BOB/$OUTPUT"
-openssl enc -a -in "$BOB/tag.bin" >>"$BOB/$OUTPUT"
-echo "-----END SHA256-HMAC TAG-----" >>"$BOB/$OUTPUT"
+echo "-----BEGIN SHA256-HMAC TAG-----" >>"$BOB/$OUTPUT_FILE"
+openssl enc -a -in "$BOB/tag.bin" >>"$BOB/$OUTPUT_FILE"
+echo "-----END SHA256-HMAC TAG-----" >>"$BOB/$OUTPUT_FILE"
 echo "[12] Done!"
 
 # send file to Alice
-echo "[13] Sending $BOB/$OUTPUT to Alice in $PUBLIC..."
-mv "$BOB/$OUTPUT" "$PUBLIC"
+echo "[13] Sending $BOB/$OUTPUT_FILE to Alice in $PUBLIC..."
+mv "$BOB/$OUTPUT_FILE" "$PUBLIC"
 echo "[13] Done!"
