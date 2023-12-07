@@ -66,7 +66,8 @@ echo "[8] Done!"
 echo "[13] Computing SHA256-HMAC for verification..."
 cat "iv.bin" "ciphertext.bin" >"combined.bin"
 xxd -p -c 32 "k2.bin" >"k2.hex"
-openssl dgst -sha256 -hmac "$(cat "k2.hex")" -binary "combined.bin" >"tag2.bin"
+HMAC_KEY=$(cat "k2.hex")
+openssl dgst -mac hmac -sha256 -macopt hexkey:"$HMAC_KEY" -binary "combined.bin" >"tag2.bin"
 echo "[13] Done!"
 
 # Compare the computed HMAC tag with the tag extracted from the message

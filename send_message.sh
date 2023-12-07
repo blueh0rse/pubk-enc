@@ -110,7 +110,7 @@ echo "[13] Done!"
 
 # compute SHA256-HMAC tag
 echo "[14] Computing SHA256-HMAC tag in $TMP/tag.bin..."
-openssl dgst -sha256 -hmac "$HMAC_KEY" -binary "$TMP/combined.bin" >"$TMP/tag.bin"
+openssl dgst -mac hmac -sha256 -macopt hexkey:"$HMAC_KEY" -binary "$TMP/combined.bin" >"$TMP/tag.bin"
 echo "[14] Done!"
 
 # create final ciphertext
